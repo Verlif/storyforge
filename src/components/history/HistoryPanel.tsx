@@ -7,6 +7,7 @@ import {
 import { useHistoryStore } from '../../stores/project-singletons'
 import { useHistoricalStore } from '../../stores/historical'
 import { useChapterStore } from '../../stores/chapter'
+import { useWorldviewStore } from '../../stores/worldview'
 import { useAIStream } from '../../hooks/useAIStream'
 import type { Project, HistoricalTimelineEvent, HistoricalEra, HistoricalKeyword, HistoricalKeywordCategory } from '../../lib/types'
 import { HISTORICAL_ERA_LABELS, KEYWORD_CATEGORY_LABELS } from '../../lib/types/history'
@@ -44,6 +45,24 @@ export default function HistoryPanel({ project }: Props) {
   const [filterEra, setFilterEra] = useState<HistoricalEra | 'all'>('all')
 
   const ai = useAIStream()
+  const { worldview } = useWorldviewStore()
+
+  /** 从世界观 store 提取与历史相关的上下文，供 AI 参考 */
+  const getWorldContext = (): string => {
+    if (!worldview) return ''
+    const parts: string[] = []
+    if (worldview.worldOrigin)    parts.push(`【世界来源】${worldview.worldOrigin.slice(0, 200)}`)
+    if (worldview.powerHierarchy) parts.push(`【力量层次】${worldview.powerHierarchy.slice(0, 150)}`)
+    if (worldview.historyLine)    parts.push(`【世界历史线】${worldview.historyLine.slice(0, 200)}`)
+    if (worldview.worldEvents)    parts.push(`【世界大事记】${worldview.worldEvents.slice(0, 200)}`)
+    if (worldview.races)          parts.push(`【种族与民族】${worldview.races.slice(0, 100)}`)
+    if (worldview.factionLayout)  parts.push(`【势力分布】${worldview.factionLayout.slice(0, 100)}`)
+    if (overview)                 parts.push(`【历史总述】${overview.slice(0, 200)}`)
+    if (eraSystem)                parts.push(`【纪年体系】${eraSystem.slice(0, 150)}`)
+    return parts.length
+      ? `\n\n=== 本项目世界观设定（请结合这些背景进行分析）===\n${parts.join('\n')}`
+      : ''
+  }
 
   useEffect(() => {
     loadHistory(project.id!)
@@ -125,6 +144,7 @@ export default function HistoryPanel({ project }: Props) {
 请使用 Markdown 格式输出，排版清晰。语言要专业、严谨、有启发性，直接输出考证结果，不要有任何客套话。`
 
     const eraLabel = HISTORICAL_ERA_LABELS[evt.era as HistoricalEra] || evt.era
+    const worldCtx = getWorldContext()
     const userPrompt = `【事件信息】
 - 标题：${evt.title}
 - 历史时期：${eraLabel}
@@ -134,7 +154,7 @@ ${evt.customTimeRange ? `- 具体时间范围/区间：${evt.customTimeRange}` :
 ${evt.location ? `- 地理位置/范围：${evt.location}` : ''}
 - 事件描述：${evt.description}
 - 是否为真实史实：${evt.isHistorical ? '是 (史实考证模式)' : '否 (虚构细节头脑风暴模式)'}
-- 现有史料来源：${evt.source || '无'}`
+- 现有史料来源：${evt.source || '无'}${worldCtx}`
 
     ai.start([
       { role: 'system', content: systemPrompt },
@@ -177,13 +197,14 @@ ${evt.location ? `- 地理位置/范围：${evt.location}` : ''}
 
     const eraLabel = HISTORICAL_ERA_LABELS[kw.era as HistoricalEra] || kw.era
     const categoryLabel = KEYWORD_CATEGORY_LABELS[kw.category as HistoricalKeywordCategory] || kw.category
+    const kwWorldCtx = getWorldContext()
     const userPrompt = `【关键词信息】
 - 关键词：${kw.keyword}
 - 分类：${categoryLabel}
 - 适用历史时期：${eraLabel}
 ${kw.customTimeRange ? `- 具体时间范围/区间：${kw.customTimeRange}` : ''}
 ${kw.location ? `- 地理位置/范围：${kw.location}` : ''}
-- 基础描述/备注：${kw.description}`
+- 基础描述/备注：${kw.description}${kwWorldCtx}`
 
     ai.start([
       { role: 'system', content: systemPrompt },
