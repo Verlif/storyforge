@@ -11,10 +11,13 @@ import { renderPrompt } from './prompt-engine'
 // ── 类型 ────────────────────────────────────────────────────────────────
 
 export interface ReverseWorldview {
-  summary: string
-  geography: string
-  society: string
-  rules: string
+  worldOrigin: string
+  powerHierarchy: string
+  continentLayout: string
+  climateByRegion: string
+  historyLine: string
+  races: string
+  factionLayout: string
 }
 
 export interface ReverseStoryCore {
@@ -69,10 +72,13 @@ export function parseReverseOutput(output: string): ReverseResult | null {
     const parsed = JSON.parse(jsonStr)
 
     const worldview: ReverseWorldview = {
-      summary: String(parsed.worldview?.summary || ''),
-      geography: String(parsed.worldview?.geography || ''),
-      society: String(parsed.worldview?.society || ''),
-      rules: String(parsed.worldview?.rules || ''),
+      worldOrigin: String(parsed.worldview?.worldOrigin || ''),
+      powerHierarchy: String(parsed.worldview?.powerHierarchy || ''),
+      continentLayout: String(parsed.worldview?.continentLayout || ''),
+      climateByRegion: String(parsed.worldview?.climateByRegion || ''),
+      historyLine: String(parsed.worldview?.historyLine || ''),
+      races: String(parsed.worldview?.races || ''),
+      factionLayout: String(parsed.worldview?.factionLayout || ''),
     }
 
     const storyCore: ReverseStoryCore = {

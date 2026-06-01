@@ -38,6 +38,7 @@ export default function WorldMapPanel({ project }: Props) {
 
   // 当前活跃世界的 Voronoi 配置
   const [voronoiConfig, setVoronoiConfig] = useState<Partial<MapGenConfig> | undefined>(undefined)
+  const [parseError, setParseError] = useState<string | null>(null)
 
   // ── 初始化世界树 ──
   useEffect(() => {
@@ -73,6 +74,7 @@ export default function WorldMapPanel({ project }: Props) {
       locations = JSON.parse(geography?.locations || '[]')
     } catch { /* empty */ }
 
+    setParseError(null)
     const messages = buildVoronoiMapPrompt(worldview, overview, locations)
     const result = await ai.start(messages)
     if (!result) return
@@ -92,6 +94,7 @@ export default function WorldMapPanel({ project }: Props) {
       }
     } catch (err) {
       console.error('Failed to parse AI Voronoi config:', err)
+      setParseError(`AI 返回的地图参数解析失败，请重试。错误：${err instanceof Error ? err.message : '未知错误'}`)
     }
   }
 
@@ -158,9 +161,9 @@ export default function WorldMapPanel({ project }: Props) {
       </div>
 
       {/* AI 错误提示 */}
-      {ai.error && (
+      {(ai.error || parseError) && (
         <div className="mb-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-400">
-          {ai.error}
+          {ai.error || parseError}
         </div>
       )}
 

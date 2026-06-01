@@ -100,10 +100,13 @@ export default function InspirationPanel({ project }: Props) {
     const wv = result.worldview
     await wvStore.saveWorldview({
       projectId: project.id!,
-      summary: wv.summary || undefined,
-      geography: wv.geography || undefined,
-      society: wv.society || undefined,
-      rules: wv.rules || undefined,
+      worldOrigin: wv.worldOrigin || undefined,
+      powerHierarchy: wv.powerHierarchy || undefined,
+      continentLayout: wv.continentLayout || undefined,
+      climateByRegion: wv.climateByRegion || undefined,
+      historyLine: wv.historyLine || undefined,
+      races: wv.races || undefined,
+      factionLayout: wv.factionLayout || undefined,
     })
     setAdoptedSections(prev => new Set(prev).add('worldview'))
     setAdopting(false)
@@ -270,17 +273,26 @@ export default function InspirationPanel({ project }: Props) {
               adoptLabel="写入世界观"
             >
               <div className="space-y-2 text-sm">
-                {result.worldview.summary && (
-                  <FieldRow label="摘要" value={result.worldview.summary} />
+                {result.worldview.worldOrigin && (
+                  <FieldRow label="世界来源" value={result.worldview.worldOrigin} />
                 )}
-                {result.worldview.geography && (
-                  <FieldRow label="地理" value={result.worldview.geography} />
+                {result.worldview.powerHierarchy && (
+                  <FieldRow label="力量层次" value={result.worldview.powerHierarchy} />
                 )}
-                {result.worldview.society && (
-                  <FieldRow label="社会" value={result.worldview.society} />
+                {result.worldview.continentLayout && (
+                  <FieldRow label="地貌分布" value={result.worldview.continentLayout} />
                 )}
-                {result.worldview.rules && (
-                  <FieldRow label="规则" value={result.worldview.rules} />
+                {result.worldview.climateByRegion && (
+                  <FieldRow label="气候环境" value={result.worldview.climateByRegion} />
+                )}
+                {result.worldview.historyLine && (
+                  <FieldRow label="世界历史" value={result.worldview.historyLine} />
+                )}
+                {result.worldview.races && (
+                  <FieldRow label="种族民族" value={result.worldview.races} />
+                )}
+                {result.worldview.factionLayout && (
+                  <FieldRow label="势力分布" value={result.worldview.factionLayout} />
                 )}
               </div>
             </ResultCard>

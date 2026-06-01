@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, Loader2 } from 'lucide-react'
 import { useWorldviewStore } from '../../stores/worldview'
+import { useAIConfigStore } from '../../stores/ai-config'
 import { InlineTextarea } from '../shared/InlineEdit'
 import { useAIStream } from '../../hooks/useAIStream'
 import { buildWorldviewPrompt } from '../../lib/ai/adapters/worldview-adapter'
 import { buildWorldRulesContext } from '../../lib/ai/world-rules-manifest'
+import { streamChat } from '../../lib/ai/client'
 import AIStreamOutput from '../shared/AIStreamOutput'
 import PromptRunPanel from '../shared/PromptRunPanel'
 import type { Project, DivineDesign } from '../../lib/types'
@@ -293,26 +295,52 @@ function DivineFieldEditor({
     ai.start(messages)
   }
 
-  const handleAccept = (text: string) => {
-    const sections = text.split(/(?:#{1,3}\s*|(?:\*\*))(?:神明层级|层级|主要神明|神明名号|国教|主流信仰|民间信仰|规则|限制|风俗|禁忌|避讳)/i)
-    let next: DivineDesign
-    if (sections.length >= 4) {
-      next = {
-        hasDivinity: true,
-        divineRank: sections[1]?.replace(/\*\*/g, '').trim() || text,
-        divineNames: sections[2]?.replace(/\*\*/g, '').trim() || '',
-        divineRules: sections[3]?.replace(/\*\*/g, '').trim() || '',
+  const [splitting, setSplitting] = useState(false)
+
+  const handleAccept = async (text: string) => {
+    // 用 AI 将生成的信仰体系文本拆分为三个结构化字段
+    setSplitting(true)
+    try {
+      const splitMessages = [
+        {
+          role: 'system' as const,
+          content: `你是一个文本结构化助手。用户提供了一段关于信仰/神明体系的描述文本，请将其拆分为三个部分，输出纯 JSON（不要 markdown 包裹）：
+{
+  "divineRank": "信仰层级体系（主流信仰分类、层级划分、信仰强弱等）",
+  "divineNames": "主要神明/信仰的名号与职司（名字、头衔、掌管领域等）",
+  "divineRules": "规则、风俗与禁忌（信仰相关的戒律、仪式、禁忌、节日等）"
+}
+如果原文中某个部分没有涉及，对应字段填空字符串。保留原文的细节，不要缩写或省略。`,
+        },
+        { role: 'user' as const, content: text },
+      ]
+      const config = useAIConfigStore.getState().config
+      let accumulated = ''
+      const stream = streamChat(splitMessages, config, new AbortController().signal, {})
+      for await (const chunk of stream) {
+        accumulated += chunk
       }
-    } else {
-      next = {
+      // 解析 JSON
+      const cleaned = accumulated.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?\s*```\s*$/i, '').trim()
+      const parsed = JSON.parse(cleaned)
+      onDivineChange({
+        hasDivinity: true,
+        divineRank: String(parsed.divineRank || '').trim() || text,
+        divineNames: String(parsed.divineNames || '').trim(),
+        divineRules: String(parsed.divineRules || '').trim(),
+      })
+    } catch {
+      // AI 拆分失败时，全部内容放入 divineRank，不丢失数据
+      onDivineChange({
         hasDivinity: true,
         divineRank: text,
-        divineNames: divineDesign.divineNames,
-        divineRules: divineDesign.divineRules,
-      }
+        divineNames: '',
+        divineRules: '',
+      })
+    } finally {
+      setSplitting(false)
+      ai.reset()
     }
-    onDivineChange(next)
-    ai.reset()
   }
 
   return (
@@ -389,6 +417,13 @@ function DivineFieldEditor({
         onParamChange={setParameterValues} systemOverride={systemOverride}
         onSystemOverrideChange={setSystemOverride} userOverride={userOverride}
         onUserOverrideChange={setUserOverride} />
+
+      {splitting && (
+        <div className="flex items-center gap-2 p-3 bg-accent/10 border border-accent/20 rounded-lg text-sm text-accent">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          AI 正在将信仰体系拆分到三个字段中...
+        </div>
+      )}
 
       {(ai.output || ai.isStreaming || ai.error) && (
         <AIStreamOutput output={ai.output} isStreaming={ai.isStreaming} error={ai.error}
