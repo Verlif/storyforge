@@ -7,6 +7,7 @@ import { ToastProvider } from './components/shared/Toast'
 import { usePromptStore } from './stores/prompt'
 import { useWorkflowStore } from './stores/workflow'
 import { ensureSchema, REQUIRED_TABLES_V26 } from './lib/db/ensure-schema'
+import { validateRegistry } from './lib/registry/validate'
 import { migrateMasterDataToReferences } from './lib/reference-analysis/migrate-master-data'
 import './index.css'
 
@@ -23,6 +24,13 @@ if (THEME_MIGRATE[savedTheme]) {
 document.documentElement.setAttribute('data-theme', savedTheme)
 
 async function bootstrap() {
+  // 0. Phase 1.1b: 注册表完整性校验。开发环境 throw(立刻发现漏登记),生产环境只告警。
+  try {
+    validateRegistry({ throwOnError: import.meta.env.DEV })
+  } catch (e) {
+    console.error('[bootstrap] registry validation failed:', e)
+  }
+
   // 1. Schema 健康自检：开发环境可自动 reset，生产环境绝不自动删库。
   try {
     await ensureSchema(REQUIRED_TABLES_V26, { allowReset: import.meta.env.DEV })

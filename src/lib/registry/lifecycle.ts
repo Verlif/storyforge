@@ -191,12 +191,13 @@ export async function cascadeDeleteGroup(projectId: number, wgId: number): Promi
 export async function stampPrimaryWorld(projectId: number, primaryId: number): Promise<void> {
   await db.transaction('rw', transactionTablesFor('migrate'), async () => {
     for (const spec of worldScopedTables()) {
+      // codexCategories(分类结构)永远保持全局共用(内置 + 自定义都不盖章),
+      // 只有「词条」codexEntries 才盖章归属主世界。与手写版 migrate 一致。
+      if (spec.name === 'codexCategories') continue
       const wgField = spec.worldGroupField ?? 'worldGroupId'
       const rows = await spec.table.where('projectId').equals(projectId).toArray()
       for (const row of rows as any[]) {
         if (row[wgField] == null) {
-          // 内置 codexCategories 保持 null=全局结构,不盖章
-          if (spec.name === 'codexCategories' && row.builtInKey) continue
           await spec.table.update(row.id, { [wgField]: primaryId })
         }
       }

@@ -11,7 +11,7 @@
 | 子任务 | 状态 | 分支 | 说明 |
 |---|---|---|---|
 | 1.1a 建 PROJECT_TABLES 注册表 + 派生 API(纯新增) | ✅ Done | `refactor/phase-1-task-1.1a` | 新建 `src/lib/registry/`,登记 45 表;派生 API 单测 10 条通过;现有调用方一行未改 |
-| 1.1b 生命周期切换到派生 API + 启动校验 | Pending | TBD | deleteProject/Group/migrate/export/import 改派生 |
+| 1.1b 生命周期切换到派生 API + 启动校验 | ✅ Done | `refactor/phase-1-task-1.1b` | deleteProject/deleteGroup/migrate 改派生;main.tsx 接入 validateRegistry;手写表清单全消失;27 测试持续全绿 |
 | 1.2a 建 FIELD_REGISTRY + AdoptionSchema + adopt() | Pending | TBD | 纯新增写回层 |
 | 1.2b 写回调用方切换到 adopt() | Pending | TBD | 灵感反推/导入/工作流/saveXxx |
 | 1.3a 建 CONTEXT_SOURCES + assembleContext() | Pending | TBD | 纯新增读取层 |
@@ -68,3 +68,21 @@
 
 **下一步(1.1b)**:把 deleteProject/deleteGroup/migrateToMultiWorld 改成调用派生 API,
 并在 main.tsx 接入 validateRegistry;反例测试 R-01~R-07 必须持续全绿。
+
+### 2026-06-08 · 1.1b 完成(by Claude)
+
+- `src/stores/project.ts`:deleteProject 删除逻辑 115 行 → `await cascadeDeleteProject(id)` 一行
+- `src/stores/world-group.ts`:
+  - deleteGroup 手写 70 行 → `await cascadeDeleteGroup(pid, id)`
+  - migrateToMultiWorld 手写 stamp → `await stampPrimaryWorld(projectId, primaryId)`
+  - 删除 45 行的 PROJECT_TABLES_ALL 手写常量
+- `src/main.tsx`:bootstrap 接入 `validateRegistry({ throwOnError: DEV })`
+- 切换过程发现并修正 1 处行为差异:
+  - 手写 migrate 不盖章任何 codexCategories(分类全局共用)
+  - 派生版原本只跳过内置分类 → 改为整表跳过,与手写版一致
+- **关键保证**:R-01~R-07 + 注册表单测 27 条持续全绿 = 派生版与手写版行为等价
+
+**验证**:tsc=0 / 27 测试全绿 / build OK / check:required-tables OK
+**反模式确认**:`grep "db.transaction('rw', \[" src/stores` 无匹配(手写表清单全消失)
+
+**下一步(1.2a)**:建 FIELD_REGISTRY + AdoptionSchema + adopt() 入口(纯新增)
