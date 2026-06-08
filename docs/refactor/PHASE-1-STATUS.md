@@ -10,7 +10,7 @@
 
 | 子任务 | 状态 | 分支 | 说明 |
 |---|---|---|---|
-| 1.1a 建 PROJECT_TABLES 注册表 + 派生 API(纯新增) | In progress | `refactor/phase-1-task-1.1a` | 新建 `src/lib/registry/`,登记 45 表;不动现有调用方 |
+| 1.1a 建 PROJECT_TABLES 注册表 + 派生 API(纯新增) | ✅ Done | `refactor/phase-1-task-1.1a` | 新建 `src/lib/registry/`,登记 45 表;派生 API 单测 10 条通过;现有调用方一行未改 |
 | 1.1b 生命周期切换到派生 API + 启动校验 | Pending | TBD | deleteProject/Group/migrate/export/import 改派生 |
 | 1.2a 建 FIELD_REGISTRY + AdoptionSchema + adopt() | Pending | TBD | 纯新增写回层 |
 | 1.2b 写回调用方切换到 adopt() | Pending | TBD | 灵感反推/导入/工作流/saveXxx |
@@ -48,4 +48,23 @@
 - 从 `refactor/phase-0-task-0.8`(Phase 0 完成态)切出 `refactor/phase-1-task-1.1a`
 - 提交 §5 伪代码文档基线(MASTER-BLUEPRINT §5 三 API 实现伪代码 + HANDOFF FAQ + PROJECT_TABLES_ALL 精修)
 - 建本进度板
-- 下一步:写 `src/lib/registry/project-tables.ts`(45 表元信息登记,纯新增)
+
+### 2026-06-08 · 1.1a 完成(by Claude)
+
+- 新建 `src/lib/registry/`:
+  - `types.ts` — TableSpec / RefSpec(simple/json/array/indirect/blob-owner)/ ExportRemapField
+  - `project-tables.ts` — 45 张表全登记(owner / worldScoped / tree / refs / exportRemap),REGISTRY_BY_NAME 索引
+  - `lifecycle.ts` — 派生 API:projectScopedTables / worldScopedTables / exportableTables /
+    transactionTablesFor / **cascadeDeleteProject** / **cascadeDeleteGroup** / **stampPrimaryWorld**
+  - `validate.ts` — checkRegistry / validateRegistry(启动期完整性校验)
+- 新建 `tests/registry/project-tables.test.ts`:10 条单测
+  - 完整性(45 表双向覆盖)/ 派生选择器 / 三个生命周期 API 行为等价
+- 测试中发现并修正 2 个真实约束:
+  - projects 根表无 projectId 字段 → 特殊处理(最后 delete)
+  - 间接归属父键必须事务前预收集(父表会在事务中被删)
+- **关键**:本步纯新增,`src/stores/` 一行未改,现有 deleteProject 等照常工作。
+
+**验证**:tsc=0 / 全套 27 测试通过(17 反例 + 10 注册表)/ build OK / stores 零改动
+
+**下一步(1.1b)**:把 deleteProject/deleteGroup/migrateToMultiWorld 改成调用派生 API,
+并在 main.tsx 接入 validateRegistry;反例测试 R-01~R-07 必须持续全绿。
