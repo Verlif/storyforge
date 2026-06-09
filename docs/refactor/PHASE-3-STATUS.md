@@ -7,7 +7,7 @@
 |---|---|---|
 | 3.1 AI 说明书自动生成器 | ✅ Done | 代码扫描生成 generated.md + CI 校验 + 防 key 漂移 |
 | 3.2 测试覆盖率体系 | ✅ Done | 聚焦核心逻辑层门槛(防退化基线) + 16 parser 测试 + registry≥75%;76 测试全绿 |
-| 3.3 CI lint(prompt key / 事务作用域 / meta 覆盖) | Pending | |
+| 3.3 CI lint + GitHub Actions | ✅ Done | 架构铁律 lint(抓到并修 1 处真违规)+ 4 守护链 + .github/workflows/ci.yml |
 | 3.4 安全加固(HTML/EPUB sanitize / PAT 不持久化) | Pending | 部分已在 Phase 2.8 做 |
 | 3.5 性能(主包 < 1MB / React.lazy 懒加载) | Pending | |
 | 3.6 文档体系(README 中英 / CONTRIBUTING) | Pending | |
@@ -46,3 +46,19 @@
 **验证**:76 测试全绿(新增 16)/ 覆盖率门槛通过(无 ERROR)/ tsc=0 / build OK
 
 **下一步(3.3)**:CI lint(prompt key 一致性 / 事务作用域 / meta 覆盖)+ GitHub Actions。
+
+## 3.3 · CI lint + GitHub Actions（2026-06-09 by Claude）
+
+- **架构守护 lint** `scripts/check-architecture.mjs`:自动执行 CLAUDE.md 三注册表铁律,防"屎山复发":
+  - ① stores 不得手写 ≥5 表的 db.transaction(必须走 lifecycle 派生)
+  - ② components/hooks/pages 不得直接 db.xxx.add/update/delete(必须走 adopt/store)
+  - ③ UI 层不得手挑 buildWorldContext/buildCharacterContext(必须走 assembleContext)
+- **lint 立刻抓到 1 处真违规**:PromptTemplateEditor 直接 `db.promptTemplates.delete()`。
+  修复:prompt store 加 `deleteTemplate` action,组件改调它,删除冗余 db import。
+- **GitHub Actions** `.github/workflows/ci.yml`:push/PR 跑 6 道关:
+  check:required-tables → check:ai-manual → check:architecture → tsc → test:coverage → build
+- **npm run ci**:一条命令本地跑完整链路。
+
+**验证**:check:architecture 0 违规 / 76 测试全绿 / tsc=0 / build OK
+
+**下一步(3.4)**:安全加固(HTML/EPUB sanitize 复核 / GitHub PAT 不持久化 / SVG 已 sanitize)。
