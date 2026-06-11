@@ -11,6 +11,7 @@ import { assembleContext } from '../../lib/registry/assemble-context'
 import { streamChat } from '../../lib/ai/client'
 import AIStreamOutput from '../shared/AIStreamOutput'
 import CodexPanel from '../codex/CodexPanel'
+import CodexSearchBar from '../codex/CodexSearchBar'
 import PromptRunPanel from '../shared/PromptRunPanel'
 import AIFieldModeTabs from '../shared/AIFieldModeTabs'
 import type { Project, DivineDesign } from '../../lib/types'
@@ -129,6 +130,12 @@ export default function WorldviewOriginPanel({ project }: Props) {
         <p className="text-xs text-text-muted mt-0.5">
           定义世界的起源、力量体系与信仰体系。如需声明真实与幻想的规则，请前往「⚖️ 真实与幻想」面板。
         </p>
+        <div className="mt-3 max-w-xl">
+          <CodexSearchBar
+            categoryKeys={['originPower', 'originDeity']}
+            onJump={(catKey) => setActive(catKey === 'originDeity' ? 'divine' : 'power')}
+          />
+        </div>
       </div>
 
       <div className="flex gap-4">

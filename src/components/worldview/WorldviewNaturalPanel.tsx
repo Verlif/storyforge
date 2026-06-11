@@ -4,6 +4,7 @@ import { useWorldviewStore } from '../../stores/worldview'
 import { useWorldGroupStore } from '../../stores/world-group'
 import WorldGroupSwitcher from '../world-group/WorldGroupSwitcher'
 import CodexPanel from '../codex/CodexPanel'
+import CodexSearchBar from '../codex/CodexSearchBar'
 import { InlineTextarea } from '../shared/InlineEdit'
 import { useAIStream } from '../../hooks/useAIStream'
 import { buildWorldviewPrompt } from '../../lib/ai/adapters/worldview-adapter'
@@ -119,6 +120,16 @@ export default function WorldviewNaturalPanel({ project }: Props) {
         <p className="text-xs text-text-muted mt-0.5">
           定义世界的地理、气候与自然资源。如需声明真实与幻想的规则，请前往「⚖️ 真实与幻想」面板。
         </p>
+        <div className="mt-3 max-w-xl">
+          <CodexSearchBar
+            categoryKeys={[...Object.values(NATURAL_CODEX_KEYS).flat().filter(Boolean) as string[], 'mineral', 'herb', 'beast']}
+            onJump={(catKey) => {
+              if (['mineral', 'herb', 'beast'].includes(catKey)) { setActiveKey('naturalResources'); return }
+              const sub = Object.keys(NATURAL_CODEX_KEYS).find(k => NATURAL_CODEX_KEYS[k]?.includes(catKey))
+              if (sub) setActiveKey(sub as FieldKey)
+            }}
+          />
+        </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">

@@ -18,6 +18,7 @@ async function buildRulesSourceContext(projectId: number, worldGroupId: number |
 }
 import CurrencyPanel from './CurrencyPanel'
 import CodexPanel from '../codex/CodexPanel'
+import CodexSearchBar from '../codex/CodexSearchBar'
 
 // ── 字段定义（统一标签，兼容幻想与历史） ─────────────────────────
 
@@ -131,6 +132,16 @@ export default function WorldviewHumanityPanel({ project }: Props) {
         <p className="text-xs text-text-muted mt-0.5">
           定义世界的历史、势力、政经文化与社会矛盾。如需声明真实与幻想的规则，请前往「⚖️ 真实与幻想」面板。
         </p>
+        {/* 词条搜索:跨本面板所有方面,点结果跳到对应子页 */}
+        <div className="mt-3 max-w-xl">
+          <CodexSearchBar
+            categoryKeys={[...new Set(Object.values(HUMANITY_CODEX_KEYS).flat().filter(Boolean) as string[])]}
+            onJump={(catKey) => {
+              const sub = Object.keys(HUMANITY_CODEX_KEYS).find(k => HUMANITY_CODEX_KEYS[k]?.includes(catKey))
+              if (sub) setActiveKey(sub)
+            }}
+          />
+        </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">

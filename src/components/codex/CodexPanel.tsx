@@ -52,6 +52,8 @@ export default function CodexPanel({ project, fixedDomain, fixedCategoryKeys, em
   const [showHidden, setShowHidden] = useState(false)
   // B1:自定义字段管理弹窗
   const [showFieldsEditor, setShowFieldsEditor] = useState(false)
+  // 词条排序方式:order=手动顺序 / importance=重要度降序 / pinyin=拼音首字母
+  const [sortMode, setSortMode] = useState<'order' | 'importance' | 'pinyin'>('order')
 
   useEffect(() => { loadAll(projectId) }, [projectId, loadAll])
 
@@ -80,10 +82,27 @@ export default function CodexPanel({ project, fixedDomain, fixedCategoryKeys, em
   }, [visibleCats, activeCatId])
 
   const activeCat = categories.find(c => c.id === activeCatId) || null
-  const catEntries = useMemo(
-    () => entries.filter(e => e.categoryId === activeCatId).sort((a, b) => a.order - b.order),
-    [entries, activeCatId],
-  )
+  const catEntries = useMemo(() => {
+    const list = entries.filter(e => e.categoryId === activeCatId)
+    if (sortMode === 'importance') {
+      return [...list].sort((a, b) => (b.importance ?? 0) - (a.importance ?? 0) || a.order - b.order)
+    }
+    if (sortMode === 'pinyin') {
+      // localeCompare('zh') 按拼音排序,无需拼音库
+      return [...list].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN'))
+    }
+    return [...list].sort((a, b) => a.order - b.order)
+  }, [entries, activeCatId, sortMode])
+  // 同分类内重名的词条名集合(用于"已有同名"提示)
+  const dupNames = useMemo(() => {
+    const count = new Map<string, number>()
+    for (const e of entries) {
+      if (e.categoryId !== activeCatId) continue
+      const n = (e.name || '').trim()
+      if (n) count.set(n, (count.get(n) ?? 0) + 1)
+    }
+    return new Set([...count.entries()].filter(([, n]) => n > 1).map(([k]) => k))
+  }, [entries, activeCatId])
   const activeEntry = entries.find(e => e.id === activeEntryId) || null
 
   // ── 分类操作 ──
@@ -212,7 +231,20 @@ export default function CodexPanel({ project, fixedDomain, fixedCategoryKeys, em
 
         {/* 中：词条列表 */}
         <div className="w-52 shrink-0 border-r border-border flex flex-col">
-          <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
+          {/* 排序下拉 */}
+          <div className="px-2 pt-2 pb-1 flex items-center gap-1.5">
+            <span className="text-[10px] text-text-muted shrink-0">排序</span>
+            <select
+              value={sortMode}
+              onChange={e => setSortMode(e.target.value as typeof sortMode)}
+              className="flex-1 text-[11px] bg-bg-elevated border border-border rounded px-1.5 py-1 text-text-secondary"
+            >
+              <option value="order">默认顺序</option>
+              <option value="importance">按重要度</option>
+              <option value="pinyin">按拼音首字母</option>
+            </select>
+          </div>
+          <div className="flex-1 overflow-y-auto p-2 pt-1 space-y-0.5">
             {catEntries.length === 0 && (
               <p className="text-xs text-text-muted px-2 py-3 text-center">暂无词条</p>
             )}
@@ -226,6 +258,9 @@ export default function CodexPanel({ project, fixedDomain, fixedCategoryKeys, em
               >
                 <span>{entry.icon || activeCat?.icon || '•'}</span>
                 <span className="truncate flex-1">{entry.name || '未命名'}</span>
+                {entry.name && dupNames.has(entry.name.trim()) && (
+                  <span className="text-amber-400 shrink-0" title="本分类下有同名词条">⚠</span>
+                )}
                 <button
                   onClick={(e) => { e.stopPropagation(); handleDeleteEntry(entry) }}
                   className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-red-400"
@@ -263,6 +298,7 @@ export default function CodexPanel({ project, fixedDomain, fixedCategoryKeys, em
               entry={activeEntry}
               category={activeCat}
               allEntries={entries}
+              nameDuplicate={!!activeEntry.name && dupNames.has(activeEntry.name.trim())}
               onChange={(patch) => updateEntry(activeEntry.id!, patch)}
             />
           ) : (
@@ -392,11 +428,12 @@ function CategoryFieldsEditor({
 // ── 词条详情表单（fieldSchema 驱动） ──────────────────────────────
 
 function EntryDetail({
-  entry, category, allEntries, onChange,
+  entry, category, allEntries, nameDuplicate, onChange,
 }: {
   entry: CodexEntry
   category: CodexCategory
   allEntries: CodexEntry[]
+  nameDuplicate?: boolean
   onChange: (patch: Partial<CodexEntry>) => void
 }) {
   const schema = useMemo(() => parseFieldSchema(category.fieldSchema), [category.fieldSchema])
@@ -420,12 +457,17 @@ function EntryDetail({
           placeholder="图标"
           className="w-14 text-center px-2 py-2 rounded-lg bg-bg-elevated border border-border text-sm"
         />
-        <CInput
-          value={entry.name}
-          onChange={(e) => onChange({ name: e.target.value })}
-          placeholder="名称"
-          className="flex-1 px-3 py-2 rounded-lg bg-bg-elevated border border-border text-sm font-medium"
-        />
+        <div className="flex-1">
+          <CInput
+            value={entry.name}
+            onChange={(e) => onChange({ name: e.target.value })}
+            placeholder="名称"
+            className={`w-full px-3 py-2 rounded-lg bg-bg-elevated border text-sm font-medium ${nameDuplicate ? 'border-amber-400/60' : 'border-border'}`}
+          />
+          {nameDuplicate && (
+            <p className="mt-1 text-[11px] text-amber-400">⚠ 本分类下已有同名词条，注意是否重复</p>
+          )}
+        </div>
       </div>
       {/* 重要度星级（1-5）—— 主要用于地点类词条;点亮的星越多越重要,再点当前星可清空 */}
       <div className="flex items-center gap-2">
