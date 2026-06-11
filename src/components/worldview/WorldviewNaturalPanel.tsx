@@ -26,20 +26,18 @@ const FIELDS = [
   { key: 'worldStructure',   emoji: '🌐', label: '世界结构',   desc: '世界的物理层级——星球 / 大陆 / 行政区划 / 平行空间等', ctxKey: 'structure',  ctxLabel: '世界结构' },
   { key: 'worldDimensions',  emoji: '📐', label: '疆域尺寸',   desc: '世界整体大小、核心区域的疆域范围',                      ctxKey: 'dim',       ctxLabel: '疆域尺寸' },
   { key: 'continentLayout',  emoji: '🗺', label: '地貌分布',   desc: '主要大陆 / 山脉 / 平原 / 盆地的分布与地形特征',         ctxKey: 'continent', ctxLabel: '地貌分布' },
-  { key: 'regionDimensions', emoji: '🏰', label: '重镇分布',   desc: '核心城市、军事重镇、商业都会的地理位置',                 ctxKey: 'region',    ctxLabel: '重镇分布' },
   { key: 'mountainsRivers',  emoji: '⛰', label: '山川水系',   desc: '重要山脉、河流、湖泊、运河与水路',                       ctxKey: 'mountains', ctxLabel: '山川水系' },
   { key: 'climateByRegion',  emoji: '🌦', label: '气候环境',   desc: '不同区域的气候类型、季节特征与自然灾害',                 ctxKey: 'climate',   ctxLabel: '气候环境' },
 ] as const
 
-const ALL_KEYS = ['worldStructure', 'worldDimensions', 'continentLayout', 'regionDimensions', 'mountainsRivers', 'climateByRegion', 'naturalResources'] as const
+const ALL_KEYS = ['worldStructure', 'worldDimensions', 'continentLayout', 'mountainsRivers', 'climateByRegion', 'naturalResources'] as const
 type FieldKey = typeof ALL_KEYS[number]
 
-// 每个方面(子页) → 其专属词条分类(builtInKey)。重镇分布复用「城池重镇」;自然资源单独处理。
+// 每个方面(子页) → 其专属词条分类(builtInKey)。(重镇/城池已移到人文环境;自然资源单独处理)
 const NATURAL_CODEX_KEYS: Record<string, string[] | undefined> = {
   worldStructure: ['natStructure'],
   worldDimensions: ['natDimension'],
   continentLayout: ['natTerrain'],
-  regionDimensions: ['city'],
   mountainsRivers: ['natWater'],
   climateByRegion: ['natClimate'],
 }
@@ -70,6 +68,7 @@ export default function WorldviewNaturalPanel({ project }: Props) {
       regionDimensions: worldview.regionDimensions || '',
       mountainsRivers:  worldview.mountainsRivers || '',
       climateByRegion:  worldview.climateByRegion || '',
+      naturalResourceOverview: worldview.naturalResourceOverview || '',
     })
     setNaturalResources(worldview.naturalResources || {
       rareCreatures: '', herbs: '', minerals: '', others: '',
@@ -175,6 +174,18 @@ export default function WorldviewNaturalPanel({ project }: Props) {
             </div>
           ))}
           <div className={activeKey === 'naturalResources' ? 'space-y-4' : 'hidden'}>
+            {/* 全貌(上):自然资源整体概述,带 AI 生成,与其它方面一致 */}
+            <SimpleFieldEditor
+              field={{ key: 'naturalResourceOverview', emoji: '🌿', label: '自然资源', desc: '矿产 / 灵材 / 动植物等自然产出的总体分布、丰饶程度与特点' }}
+              value={values.naturalResourceOverview || ''}
+              onChange={v => {
+                setValues(prev => ({ ...prev, naturalResourceOverview: v }))
+                save({ naturalResourceOverview: v })
+              }}
+              project={project}
+              contextSummary={buildCtx('resources')}
+              onStreamingChange={streaming => handleStreamingChange('naturalResources', streaming)}
+            />
             {/* 自然资源:矿物/草药/异兽 三类词条 */}
             <div>
               <h3 className="text-sm font-semibold text-text-primary mb-1">📚 自然物产 · 具体词条</h3>
@@ -244,11 +255,6 @@ function SimpleFieldEditor({ field, value, onChange, project, contextSummary, on
       <div>
         <h3 className="text-lg font-semibold text-text-primary">{field.emoji} {field.label}</h3>
         <p className="mt-1 text-sm text-text-muted">{field.desc}</p>
-        {(field.key === 'continentLayout' || field.key === 'regionDimensions') && (
-          <p className="mt-1.5 text-xs text-accent/80 bg-accent/5 border border-accent/15 rounded px-2 py-1">
-            💡 这里写地貌/重镇概述；可视化地图与具体地点请到「🗺️ 世界地图」生成和管理。
-          </p>
-        )}
       </div>
 
       <div className="bg-bg-surface border border-border rounded-lg p-4">
