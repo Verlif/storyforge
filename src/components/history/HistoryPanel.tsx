@@ -664,6 +664,17 @@ export default function HistoryPanel({ project }: Props) {
                               />
                             </div>
 
+                            {/* 对剧情/世界的影响（属于条目定稿的语义补充，紧跟其后；放在 AI 工作区之上） */}
+                            <div>
+                              <label className="block text-[11px] text-text-muted mb-1">对剧情/世界的影响 (可选)</label>
+                              <CTextarea
+                                value={evt.impact || ''}
+                                onChange={e => updateEvent(evt.id!, { impact: e.target.value })}
+                                placeholder="该事件如何推动主角剧情，或者对架空世界线产生什么影响..."
+                                className="w-full h-20 p-2 bg-bg-base border border-border rounded-lg text-xs text-text-primary resize-y focus:outline-none focus:border-accent"
+                              />
+                            </div>
+
                             {/* 关联章节（紧跟「条目定稿」，因为它属于条目定稿的归档元数据；放在 AI 工作区之上） */}
                             <div className="grid grid-cols-1 gap-3">
                               <div>
@@ -737,17 +748,6 @@ export default function HistoryPanel({ project }: Props) {
                                   className="w-full h-20 p-2 bg-bg-base border border-border rounded-lg text-xs text-text-primary resize-y focus:outline-none focus:border-accent"
                                 />
                               </div>
-                            </div>
-
-                            {/* 影响与关联章节 */}
-                            <div>
-                              <label className="block text-[11px] text-text-muted mb-1">对剧情/世界的影响 (可选)</label>
-                              <CTextarea
-                                value={evt.impact || ''}
-                                onChange={e => updateEvent(evt.id!, { impact: e.target.value })}
-                                placeholder="该事件如何推动主角剧情，或者对架空世界线产生什么影响..."
-                                className="w-full h-20 p-2 bg-bg-base border border-border rounded-lg text-xs text-text-primary resize-y focus:outline-none focus:border-accent"
-                              />
                             </div>
 
                             {/* 双 agent 触发按钮 */}
