@@ -617,4 +617,6 @@ npm run dev
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=yuanbw2025/storyforge&type=Date)](https://star-history.com/#yuanbw2025/storyforge&Date)
+<a href="https://star-history.com/#yuanbw2025/storyforge&Date">
+  <img src="https://api.star-history.com/svg?repos=yuanbw2025/storyforge&type=Date" width="380" alt="Star History Chart" />
+</a>
