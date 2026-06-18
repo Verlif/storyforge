@@ -5,6 +5,7 @@ import { useDragReorder, type ItemDnD } from './useDragReorder'
 import { useWorldviewStore } from '../../stores/worldview'
 import { useWorldGroupStore } from '../../stores/world-group'
 import { useAIStream } from '../../hooks/useAIStream'
+import { createAISessionKey } from '../../stores/ai-generation-session'
 import { buildVolumeOutlinePrompt, buildChapterOutlinePrompt } from '../../lib/ai/adapters/outline-adapter'
 import { assembleContext } from '../../lib/registry/assemble-context'
 import {
@@ -74,7 +75,11 @@ export default function OutlinePanel({ project, onOpenChapter }: Props) {
   }, [project.id])
   const [batchResult, setBatchResult] = useState<Map<number, ParsedChapter[]> | null>(null)
 
-  const ai = useAIStream()
+  const ai = useAIStream(createAISessionKey(project.id!, 'outline.generate'))
+  const sessionModuleKey: 'outline.volume' | 'outline.chapter' =
+    ai.operation === 'outline.chapter' ? 'outline.chapter'
+      : ai.operation === 'outline.volume' ? 'outline.volume'
+        : activeModuleKey
 
   useEffect(() => { loadAll(project.id!) }, [project.id, loadAll])
 
@@ -218,6 +223,7 @@ export default function OutlinePanel({ project, onOpenChapter }: Props) {
 
   const handleAIVolumes = async () => {
     setActiveModuleKey('outline.volume')
+    ai.setOperation('outline.volume')
     setPreviewVolumes(null)
     setPreviewChapters(null)
     const assembled = await buildOutlineAssembledContext(null)
@@ -232,6 +238,7 @@ export default function OutlinePanel({ project, onOpenChapter }: Props) {
   const handleAIChapters = async () => {
     if (!selectedVol) return
     setActiveModuleKey('outline.chapter')
+    ai.setOperation('outline.chapter')
     setPreviewVolumes(null)
     setPreviewChapters(null)
     const assembled = await buildOutlineAssembledContext(selectedVol.worldGroupId ?? null, selectedVol.id)
@@ -331,7 +338,7 @@ export default function OutlinePanel({ project, onOpenChapter }: Props) {
   const handlePreviewAccept = async (text: string) => {
     setRestructuring(true)
     try {
-      if (activeModuleKey === 'outline.volume') {
+      if (sessionModuleKey === 'outline.volume') {
         const parsed = await parseVolumeOutlineSmart(text, aiConfig)
         if (parsed.length === 0) {
           toast.error('未能从 AI 输出中解析出卷级大纲，请检查输出内容或重试。')
@@ -564,7 +571,7 @@ export default function OutlinePanel({ project, onOpenChapter }: Props) {
           className="w-full px-3 py-2 bg-bg-surface border border-border rounded-md text-text-primary text-sm focus:outline-none focus:border-accent" />
 
         <PromptRunPanel
-          moduleKey={activeModuleKey}
+          moduleKey={sessionModuleKey}
           parameterValues={parameterValues}
           onParamChange={setParameterValues}
           systemOverride={systemOverride}
@@ -578,8 +585,8 @@ export default function OutlinePanel({ project, onOpenChapter }: Props) {
           <AIStreamOutput output={ai.output} isStreaming={ai.isStreaming} error={ai.error} tokenUsage={ai.tokenUsage}
             onStop={ai.stop}
             onAccept={handlePreviewAccept}
-            onRetry={activeModuleKey === 'outline.volume' ? handleAIVolumes : handleAIChapters}
-            moduleKey={activeModuleKey} />
+            onRetry={sessionModuleKey === 'outline.volume' ? handleAIVolumes : handleAIChapters}
+            moduleKey={sessionModuleKey} />
         )}
 
         {restructuring && (

@@ -6,6 +6,7 @@ import { useAIConfigStore } from '../../stores/ai-config'
 import WorldGroupSwitcher from '../world-group/WorldGroupSwitcher'
 import { InlineTextarea } from '../shared/InlineEdit'
 import { useAIStream } from '../../hooks/useAIStream'
+import { createAISessionKey } from '../../stores/ai-generation-session'
 import { buildWorldviewPrompt } from '../../lib/ai/adapters/worldview-adapter'
 import { assembleContext } from '../../lib/registry/assemble-context'
 import { streamChat } from '../../lib/ai/client'
@@ -236,8 +237,12 @@ function TextFieldEditor({
   const [systemOverride, setSystemOverride] = useState<string | null>(null)
   const [userOverride, setUserOverride] = useState<string | null>(null)
   const [mode, setMode] = useState<FieldGenerationMode>('expand')
-  const ai = useAIStream()
   const activeGroupId = useWorldGroupStore(s => s.activeGroupId)
+  const ai = useAIStream(createAISessionKey(
+    project.id!,
+    'worldview.dimension',
+    `${activeGroupId ?? 'global'}:${field.key}`,
+  ))
 
   useEffect(() => {
     onStreamingChange(ai.isStreaming)
@@ -323,8 +328,12 @@ function DivineFieldEditor({
   const [systemOverride, setSystemOverride] = useState<string | null>(null)
   const [userOverride, setUserOverride] = useState<string | null>(null)
   const [mode, setMode] = useState<FieldGenerationMode>('expand')
-  const ai = useAIStream()
   const activeGroupId = useWorldGroupStore(s => s.activeGroupId)
+  const ai = useAIStream(createAISessionKey(
+    project.id!,
+    'worldview.dimension',
+    `${activeGroupId ?? 'global'}:${field.key}`,
+  ))
 
   useEffect(() => {
     onStreamingChange(ai.isStreaming)

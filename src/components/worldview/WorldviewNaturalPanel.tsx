@@ -7,6 +7,7 @@ import CodexPanel from '../codex/CodexPanel'
 import CodexSearchBar from '../codex/CodexSearchBar'
 import { InlineTextarea } from '../shared/InlineEdit'
 import { useAIStream } from '../../hooks/useAIStream'
+import { createAISessionKey } from '../../stores/ai-generation-session'
 import { buildWorldviewPrompt } from '../../lib/ai/adapters/worldview-adapter'
 import { assembleContext } from '../../lib/registry/assemble-context'
 import AIStreamOutput from '../shared/AIStreamOutput'
@@ -236,8 +237,12 @@ function SimpleFieldEditor({ field, value, onChange, project, contextSummary, on
   const [systemOverride, setSystemOverride] = useState<string | null>(null)
   const [userOverride, setUserOverride] = useState<string | null>(null)
   const [mode, setMode] = useState<FieldGenerationMode>('expand')
-  const ai = useAIStream()
   const activeGroupId = useWorldGroupStore(s => s.activeGroupId)
+  const ai = useAIStream(createAISessionKey(
+    project.id!,
+    'worldview.dimension',
+    `${activeGroupId ?? 'global'}:${field.key}`,
+  ))
 
   useEffect(() => {
     onStreamingChange(ai.isStreaming)

@@ -102,45 +102,45 @@ AI 输出经 `adopt({ target, data })` 写回,只有这里登记的字段可写(
 | category | 触发文件 |
 |---|---|
 | `ai.restructure` | `src/lib/ai/restructure.ts:52` |
-| `chapter.content` | `src/components/editor/ChapterEditor.tsx:278` |
+| `chapter.content` | `src/components/editor/ChapterEditor.tsx:283` |
 | `chapter.content.batch` | `src/lib/ai/batch-detail-runner.ts:256` |
-| `chapter.continue` | `src/components/editor/ChapterEditor.tsx:288` |
-| `chapter.deai` | `src/components/editor/ChapterEditor.tsx:324` |
-| `chapter.expand` | `src/components/editor/ChapterEditor.tsx:304` |
-| `chapter.polish` | `src/components/editor/ChapterEditor.tsx:296` |
+| `chapter.continue` | `src/components/editor/ChapterEditor.tsx:293` |
+| `chapter.deai` | `src/components/editor/ChapterEditor.tsx:329` |
+| `chapter.expand` | `src/components/editor/ChapterEditor.tsx:309` |
+| `chapter.polish` | `src/components/editor/ChapterEditor.tsx:301` |
 | `chapter.toolbar` | `src/components/editor/FloatingToolbar.tsx:105` |
-| `character.generate` | `src/components/character/CharacterPanel.tsx:132` |
+| `character.generate` | `src/components/character/CharacterPanel.tsx:137` |
 | `character.structure` | `src/lib/ai/parse-character-output.ts:92` |
-| `detail.scene` | `src/components/outline/DetailedOutlinePanel.tsx:163`<br/>`src/components/outline/ScenePanel.tsx:110`<br/>`src/lib/ai/batch-detail-runner.ts:109` |
-| `emotion.beat` | `src/components/editor/EmotionBeatCard.tsx:65` |
-| `foreshadow.structure` | `src/components/foreshadow/ForeshadowPanel.tsx:59` |
-| `foreshadow.suggest` | `src/components/foreshadow/ForeshadowPanel.tsx:158` |
-| `geography.concept-map` | `src/components/geography/GeographyPanel.tsx:110` |
-| `geography.world-map` | `src/components/geography/WorldMapPanel.tsx:98` |
-| `inspiration.reverse` | `src/components/project/InspirationPanel.tsx:110` |
+| `detail.scene` | `src/components/outline/DetailedOutlinePanel.tsx:163`<br/>`src/components/outline/ScenePanel.tsx:111`<br/>`src/lib/ai/batch-detail-runner.ts:109` |
+| `emotion.beat` | `src/components/editor/EmotionBeatCard.tsx:66` |
+| `foreshadow.structure` | `src/components/foreshadow/ForeshadowPanel.tsx:60` |
+| `foreshadow.suggest` | `src/components/foreshadow/ForeshadowPanel.tsx:159` |
+| `geography.concept-map` | `src/components/geography/GeographyPanel.tsx:127` |
+| `geography.world-map` | `src/components/geography/WorldMapPanel.tsx:103` |
+| `inspiration.reverse` | `src/components/project/InspirationPanel.tsx:111` |
 | `inventory.extract` | `src/components/items/InventoryPanel.tsx:63` |
-| `outline.chapter` | `src/components/outline/OutlinePanel.tsx:244`<br/>`src/lib/ai/batch-outline-runner.ts:123` |
-| `outline.character-driven` | `src/components/outline/CharacterDrivenPlotPanel.tsx:115` |
-| `outline.volume` | `src/components/outline/OutlinePanel.tsx:229` |
+| `outline.chapter` | `src/components/outline/OutlinePanel.tsx:251`<br/>`src/lib/ai/batch-outline-runner.ts:123` |
+| `outline.character-driven` | `src/components/outline/CharacterDrivenPlotPanel.tsx:116` |
+| `outline.volume` | `src/components/outline/OutlinePanel.tsx:235` |
 | `prompt.examples` | `src/components/settings/prompt/PromptExamplesEditor.tsx:105` |
 | `reference.characters` | `src/components/project/AnalysisReportViewer.tsx:138` |
 | `reference.summary` | `src/components/project/AnalysisReportViewer.tsx:109` |
-| `relation.extract` | `src/components/relations/CharacterRelationPanel.tsx:71` |
-| `review.anti-ai` | `src/components/editor/ReviewPanel.tsx:64` |
-| `review.quality` | `src/components/editor/ReviewPanel.tsx:56` |
-| `review.readability` | `src/components/editor/ReviewPanel.tsx:73` |
-| `review.revise` | `src/components/editor/ChapterEditor.tsx:339` |
-| `rules.generate` | `src/components/rules/CreativeRulesPanel.tsx:77` |
-| `scene.verify` | `src/components/scene/SceneVerifyPanel.tsx:76` |
-| `story-arc.generate` | `src/components/outline/StoryArcPanel.tsx:83` |
-| `story.generate` | `src/components/worldview/StoryCorePanel.tsx:190` |
+| `relation.extract` | `src/components/relations/CharacterRelationPanel.tsx:73` |
+| `review.anti-ai` | `src/components/editor/ReviewPanel.tsx:66` |
+| `review.quality` | `src/components/editor/ReviewPanel.tsx:58` |
+| `review.readability` | `src/components/editor/ReviewPanel.tsx:75` |
+| `review.revise` | `src/components/editor/ChapterEditor.tsx:344` |
+| `rules.generate` | `src/components/rules/CreativeRulesPanel.tsx:80` |
+| `scene.verify` | `src/components/scene/SceneVerifyPanel.tsx:81` |
+| `story-arc.generate` | `src/components/outline/StoryArcPanel.tsx:84` |
+| `story.generate` | `src/components/worldview/StoryCorePanel.tsx:193` |
 | `story.timeline` | `src/components/timeline/StoryTimelinePanel.tsx:70` |
 | `style.learn` | `src/components/style/StyleLearningPanel.tsx:76` |
-| `world-group.expand` | `src/components/world-group/WorldGroupDetail.tsx:97` |
-| `world-group.suggest` | `src/components/world-group/WorldGroupOverview.tsx:50` |
-| `worldview.dimension` | `src/components/worldview/WorldviewHumanityPanel.tsx:242`<br/>`src/components/worldview/WorldviewNaturalPanel.tsx:261`<br/>`src/components/worldview/WorldviewOriginPanel.tsx:265` |
-| `worldview.divine` | `src/components/worldview/WorldviewOriginPanel.tsx:360` |
-| `worldview.divine.split` | `src/components/worldview/WorldviewOriginPanel.tsx:384` |
+| `world-group.expand` | `src/components/world-group/WorldGroupDetail.tsx:98` |
+| `world-group.suggest` | `src/components/world-group/WorldGroupOverview.tsx:57` |
+| `worldview.dimension` | `src/components/worldview/WorldviewHumanityPanel.tsx:247`<br/>`src/components/worldview/WorldviewNaturalPanel.tsx:266`<br/>`src/components/worldview/WorldviewOriginPanel.tsx:270` |
+| `worldview.divine` | `src/components/worldview/WorldviewOriginPanel.tsx:369` |
+| `worldview.divine.split` | `src/components/worldview/WorldviewOriginPanel.tsx:393` |
 
 ### 动态 category 调用
 
@@ -148,4 +148,4 @@ AI 输出经 `adopt({ target, data })` 写回,只有这里登记的字段可写(
 
 ---
 
-生成时间基准:commit `1e9081e`
+生成时间基准:commit `3d5605c`

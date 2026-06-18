@@ -5,12 +5,14 @@
  */
 import { X, ShieldCheck, Bot, TrendingUp, Loader2, AlertTriangle, AlertCircle, Info, Wand2 } from 'lucide-react'
 import { useAIStream } from '../../hooks/useAIStream'
+import { createAISessionKey } from '../../stores/ai-generation-session'
 import { useReviewResultStore, selectChapterReview, type ReviewTab } from '../../stores/review-result'
 import { buildReviewPrompt, parseReviewResult, REVIEW_DIMENSION_LABELS, type ReviewResult } from '../../lib/ai/adapters/review-adapter'
 import { buildAntiAIPrompt, parseAntiAIResult, ANTI_AI_DIMENSION_LABELS, extractHighFreqWords, type AntiAIResult } from '../../lib/ai/adapters/anti-ai-adapter'
 import { buildReadabilityPrompt, parseReadabilityResult, READABILITY_DIMENSION_LABELS, type ReadabilityResult } from '../../lib/ai/adapters/readability-adapter'
 
 interface Props {
+  projectId: number
   /** 当前章节 id — 审校结果按章缓存到 store，收起/切标签不丢（bug G7 / B1） */
   chapterId: number
   chapterContent: string
@@ -35,10 +37,10 @@ const TABS: { key: TabType; label: string; icon: typeof ShieldCheck }[] = [
 ]
 
 export default function ReviewPanel(props: Props) {
-  const { chapterId, chapterContent, chapterTitle, worldContext, characterContext,
+  const { projectId, chapterId, chapterContent, chapterTitle, worldContext, characterContext,
     prevChapterSummary, nextChapterSummary, foreshadowContext, stateContext, onClose, onReviseByReport } = props
 
-  const ai = useAIStream()
+  const ai = useAIStream(createAISessionKey(projectId, 'review.run', chapterId))
 
   // 结果与当前标签都存 store（按 chapterId），故收起再展开 / 切一级标签回来都还在
   const cached = useReviewResultStore(selectChapterReview(chapterId))

@@ -4,6 +4,7 @@ import { useChapterStore } from '../../stores/chapter'
 import { useOutlineStore } from '../../stores/outline'
 import { useStateCardStore } from '../../stores/state-card'
 import { useAIStream } from '../../hooks/useAIStream'
+import { createAISessionKey } from '../../stores/ai-generation-session'
 import { CInput } from '../shared/CompositionInput'
 import { useAutoSave } from '../../hooks/useAutoSave'
 import { useBeforeUnload } from '../../hooks/useBeforeUnload'
@@ -21,6 +22,7 @@ import { htmlToPlainText, plainTextToHtml, countWords } from '../../lib/utils/ht
 import AIStreamOutput from '../shared/AIStreamOutput'
 import ContextBudgetBar from '../shared/ContextBudgetBar'
 import { useDialog } from '../shared/Dialog'
+import { useReviewResultStore } from '../../stores/review-result'
 import { useAIConfigStore } from '../../stores/ai-config'
 import { analyzeContextSegments, calculateBudget, type ContextBudget } from '../../lib/ai/context-budget'
 import StateDiffModal from '../state/StateDiffModal'
@@ -53,14 +55,17 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
   const [plainText, setPlainText] = useState('')
   const [savedContent, setSavedContent] = useState('')
   const [showContext, setShowContext] = useState(false)
-  const [aiAction, setAIAction] = useState<string>('')
   const [customInstruction, setCustomInstruction] = useState('')
   const [extracting, setExtracting] = useState(false)
   const [pendingDiffs, setPendingDiffs] = useState<StateDiffItem[] | null>(null)
   // A2: 按需召回 — 手动额外勾选/取消的状态卡 ID
   const [extraStateIds, setExtraStateIds] = useState<number[]>([])
   const [showStatePreview, setShowStatePreview] = useState(false)
-  const ai = useAIStream()
+  const ai = useAIStream(createAISessionKey(
+    project.id!,
+    'chapter.content',
+    currentChapter?.id ?? outlineNodeId ?? 'unselected',
+  ))
   const stateAI = useAIStream()
   const summaryAI = useAIStream()
   const editorRef = useRef<RichEditorHandle>(null)
@@ -274,7 +279,7 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
     ])
     setContextBudget(calculateBudget(aiConfig.provider, aiConfig.model, segments, aiConfig.contextWindow))
 
-    setAIAction('generate')
+    ai.setOperation('generate')
     ai.start(messages, undefined, { category: 'chapter.content', projectId: project.id! })
   }
 
@@ -284,7 +289,7 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
     // fullCtx 已不含角色(见 buildFullWorldCtx),续写也要角色 → 把 charCtx 一并带上(只此一次,不重复)
     const ctxWithChars = charCtx ? `${fullCtx}\n\n【角色设定】\n${charCtx}` : fullCtx
     const messages = buildContinuePrompt(plainText, outlineNode.summary, ctxWithChars, customInstruction.trim() || undefined)
-    setAIAction('continue')
+    ai.setOperation('continue')
     ai.start(messages, undefined, { category: 'chapter.continue', projectId: project.id! })
   }
 
@@ -292,7 +297,7 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
     const selected = editorRef.current?.getSelectedText() || plainText.slice(-1000)
     if (!selected) return
     const messages = buildPolishPrompt(selected, customInstruction || '优化文笔，使表达更生动')
-    setAIAction('polish')
+    ai.setOperation('polish')
     ai.start(messages, undefined, { category: 'chapter.polish', projectId: project.id! })
   }
 
@@ -300,7 +305,7 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
     const selected = editorRef.current?.getSelectedText() || plainText.slice(-500)
     if (!selected) return
     const messages = buildExpandPrompt(selected, customInstruction.trim() || undefined)
-    setAIAction('expand')
+    ai.setOperation('expand')
     ai.start(messages, undefined, { category: 'chapter.expand', projectId: project.id! })
   }
 
@@ -320,7 +325,7 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
     })
     if (!ok) return
     const messages = buildDeAIPrompt(target)
-    setAIAction(isFull ? 'deai-full' : 'deai')
+    ai.setOperation(isFull ? 'deai-full' : 'deai')
     ai.start(messages, undefined, { category: 'chapter.deai', projectId: project.id! })
   }
 
@@ -335,7 +340,7 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
     if (!ok) return
     reviseReportRef.current = report
     const messages = buildReviewRevisePrompt(plainText, report, worldCtx, charCtx)
-    setAIAction('revise-full')
+    ai.setOperation('revise-full')
     ai.start(messages, undefined, { category: 'review.revise', projectId: project.id! })
   }
 
@@ -422,8 +427,19 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
     await handleAutoSummary(text)
   }
 
-  const handleAcceptAI = (text: string) => {
+  const handleAcceptAI = async (text: string) => {
     if (!editorRef.current) return
+    const aiAction = ai.operation
+    if (
+      (aiAction === 'polish' || aiAction === 'expand' || aiAction === 'deai')
+      && !editorRef.current.getSelectedText()
+    ) {
+      await dialog.alert({
+        title: '请重新选中原文',
+        message: '切换页面后原选区无法安全恢复。请在正文中重新选中要替换的文字，再点击“采纳”。生成结果会继续保留。',
+      })
+      return
+    }
     // G6：去掉段落之间的多余空行——丢弃纯空行，每个非空行成一段，段间距交给 CSS（不要空段落）
     const normalizeProse = (t: string) =>
       t.split(/\r?\n/).map(l => l.trimEnd()).filter(l => l.trim().length > 0).join('\n')
@@ -444,7 +460,6 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
       editorRef.current.replaceSelection(html)
     }
     ai.reset()
-    setAIAction('')
 
     // Phase A1: 生成/续写完成后自动触发状态提取 + 摘要生成
     if (shouldAutoProcess) {
@@ -655,6 +670,7 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
       {showReviewPanel && (
         <div className="mb-3">
           <ReviewPanel
+            projectId={project.id!}
             chapterId={currentChapter.id!}
             chapterContent={plainText}
             chapterTitle={outlineNode?.title || currentChapter?.title || ''}
@@ -711,12 +727,20 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
         <div className="mb-3">
           <AIStreamOutput output={ai.output} isStreaming={ai.isStreaming} error={ai.error} tokenUsage={ai.tokenUsage}
             onStop={ai.stop} onAccept={handleAcceptAI}
-            onDismiss={() => { ai.reset(); setAIAction('') }}
+            onDismiss={ai.reset}
             onRetry={() => {
-              if (aiAction === 'generate') handleGenerate()
-              else if (aiAction === 'continue') handleContinue()
-              else if (aiAction === 'deai' || aiAction === 'deai-full') handleDeAI()
-              else if (aiAction === 'revise-full' && reviseReportRef.current) handleReviseByReport(reviseReportRef.current)
+              if (ai.operation === 'generate') handleGenerate()
+              else if (ai.operation === 'continue') handleContinue()
+              else if (ai.operation === 'polish') handlePolish()
+              else if (ai.operation === 'expand') handleExpand()
+              else if (ai.operation === 'deai' || ai.operation === 'deai-full') handleDeAI()
+              else if (ai.operation === 'revise-full') {
+                const cachedReport = currentChapter?.id
+                  ? useReviewResultStore.getState().byChapter[currentChapter.id]?.review
+                  : null
+                const report = reviseReportRef.current ?? cachedReport
+                if (report) handleReviseByReport(report)
+              }
             }} />
         </div>
       )}
