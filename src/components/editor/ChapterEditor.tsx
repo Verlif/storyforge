@@ -620,6 +620,7 @@ export default function ChapterEditor({ project, outlineNodeId }: Props) {
       {showReviewPanel && (
         <div className="mb-3">
           <ReviewPanel
+            chapterId={currentChapter.id!}
             chapterContent={plainText}
             chapterTitle={outlineNode?.title || currentChapter?.title || ''}
             worldContext={worldCtx}

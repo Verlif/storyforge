@@ -3,14 +3,16 @@
  *
  * 集成三套质量检测：审校(F1)、去AI味(F2)、追读力(F3)
  */
-import { useState } from 'react'
 import { X, ShieldCheck, Bot, TrendingUp, Loader2, AlertTriangle, AlertCircle, Info } from 'lucide-react'
 import { useAIStream } from '../../hooks/useAIStream'
+import { useReviewResultStore, selectChapterReview, type ReviewTab } from '../../stores/review-result'
 import { buildReviewPrompt, parseReviewResult, REVIEW_DIMENSION_LABELS, type ReviewResult } from '../../lib/ai/adapters/review-adapter'
 import { buildAntiAIPrompt, parseAntiAIResult, ANTI_AI_DIMENSION_LABELS, extractHighFreqWords, type AntiAIResult } from '../../lib/ai/adapters/anti-ai-adapter'
 import { buildReadabilityPrompt, parseReadabilityResult, READABILITY_DIMENSION_LABELS, type ReadabilityResult } from '../../lib/ai/adapters/readability-adapter'
 
 interface Props {
+  /** 当前章节 id — 审校结果按章缓存到 store，收起/切标签不丢（bug G7 / B1） */
+  chapterId: number
   chapterContent: string
   chapterTitle: string
   worldContext: string
@@ -22,7 +24,7 @@ interface Props {
   onClose: () => void
 }
 
-type TabType = 'review' | 'antiAI' | 'readability'
+type TabType = ReviewTab
 
 const TABS: { key: TabType; label: string; icon: typeof ShieldCheck }[] = [
   { key: 'review', label: '审校', icon: ShieldCheck },
@@ -31,15 +33,18 @@ const TABS: { key: TabType; label: string; icon: typeof ShieldCheck }[] = [
 ]
 
 export default function ReviewPanel(props: Props) {
-  const { chapterContent, chapterTitle, worldContext, characterContext,
+  const { chapterId, chapterContent, chapterTitle, worldContext, characterContext,
     prevChapterSummary, nextChapterSummary, foreshadowContext, stateContext, onClose } = props
 
-  const [activeTab, setActiveTab] = useState<TabType>('review')
   const ai = useAIStream()
 
-  const [reviewResult, setReviewResult] = useState<ReviewResult | null>(null)
-  const [antiAIResult, setAntiAIResult] = useState<AntiAIResult | null>(null)
-  const [readabilityResult, setReadabilityResult] = useState<ReadabilityResult | null>(null)
+  // 结果与当前标签都存 store（按 chapterId），故收起再展开 / 切一级标签回来都还在
+  const cached = useReviewResultStore(selectChapterReview(chapterId))
+  const { review: reviewResult, antiAI: antiAIResult, readability: readabilityResult, activeTab } = cached
+  const setReview = useReviewResultStore(s => s.setReview)
+  const setAntiAI = useReviewResultStore(s => s.setAntiAI)
+  const setReadability = useReviewResultStore(s => s.setReadability)
+  const setActiveTab = (tab: TabType) => useReviewResultStore.getState().setActiveTab(chapterId, tab)
 
   const handleRunReview = async () => {
     const messages = buildReviewPrompt(
@@ -48,7 +53,7 @@ export default function ReviewPanel(props: Props) {
     )
     const output = await ai.start(messages, undefined, { category: 'review.quality' })
     const result = parseReviewResult(output)
-    if (result) setReviewResult(result)
+    if (result) setReview(chapterId, result)
   }
 
   const handleRunAntiAI = async () => {
@@ -56,7 +61,7 @@ export default function ReviewPanel(props: Props) {
     const messages = buildAntiAIPrompt(chapterContent, highFreq.map(w => w.replace(/\(\d+次\)/, '')))
     const output = await ai.start(messages, undefined, { category: 'review.anti-ai' })
     const result = parseAntiAIResult(output)
-    if (result) setAntiAIResult(result)
+    if (result) setAntiAI(chapterId, result)
   }
 
   const handleRunReadability = async () => {
@@ -65,7 +70,7 @@ export default function ReviewPanel(props: Props) {
     )
     const output = await ai.start(messages, undefined, { category: 'review.readability' })
     const result = parseReadabilityResult(output)
-    if (result) setReadabilityResult(result)
+    if (result) setReadability(chapterId, result)
   }
 
   const handleRun = () => {

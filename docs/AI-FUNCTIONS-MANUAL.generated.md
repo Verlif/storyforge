@@ -126,9 +126,9 @@ AI 输出经 `adopt({ target, data })` 写回,只有这里登记的字段可写(
 | `reference.characters` | `src/components/project/AnalysisReportViewer.tsx:138` |
 | `reference.summary` | `src/components/project/AnalysisReportViewer.tsx:109` |
 | `relation.extract` | `src/components/relations/CharacterRelationPanel.tsx:71` |
-| `review.anti-ai` | `src/components/editor/ReviewPanel.tsx:57` |
-| `review.quality` | `src/components/editor/ReviewPanel.tsx:49` |
-| `review.readability` | `src/components/editor/ReviewPanel.tsx:66` |
+| `review.anti-ai` | `src/components/editor/ReviewPanel.tsx:62` |
+| `review.quality` | `src/components/editor/ReviewPanel.tsx:54` |
+| `review.readability` | `src/components/editor/ReviewPanel.tsx:71` |
 | `rules.generate` | `src/components/rules/CreativeRulesPanel.tsx:77` |
 | `scene.verify` | `src/components/scene/SceneVerifyPanel.tsx:76` |
 | `story-arc.generate` | `src/components/outline/StoryArcPanel.tsx:83` |
@@ -147,4 +147,4 @@ AI 输出经 `adopt({ target, data })` 写回,只有这里登记的字段可写(
 
 ---
 
-生成时间基准:commit `c84fbf0`
+生成时间基准:commit `832120b`
