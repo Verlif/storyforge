@@ -1,0 +1,33 @@
+name: GithubPageDeploy
+
+on:
+  push:
+    branches:
+      - main  # 触发分支
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Vue project
+        run: npm run build
+
+      - name: Deploy to Another Repository
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}  # 使用 PAT
+          repository-name: Verlif/storyforge  # 目标仓库
+          branch: gh-pages  # 目标分支（可自定义）
+          folder: public  # Vue 打包后的目录
+          clean: true  # 清理旧文件
