@@ -1,0 +1,1 @@
+const a={primary:"主世界",traversal:"穿越目标",instance:"副本世界",parallel:"平行世界",ascension:"上界/高维",custom:"自定义"},s={portal:"传送门",ascension:"飞升通道",summon:"召唤",branch:"分支点",return:"回归通道",custom:"自定义"};export{a as W,s as a};

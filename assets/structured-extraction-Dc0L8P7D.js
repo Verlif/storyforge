@@ -1,0 +1,3 @@
+function l(c,s=5200,a=320){const t=c.trim();if(!t)return[];if(t.length<=s)return[t];const n=[];let r=0;for(;r<t.length;){let e=Math.min(t.length,r+s);if(e<t.length){const o=t.lastIndexOf(`
+
+`,e),f=Math.max(t.lastIndexOf("。",e),t.lastIndexOf("！",e),t.lastIndexOf("？",e)),i=Math.max(o,f);i>r+Math.floor(s*.65)&&(e=i+1)}if(n.push(t.slice(r,e)),e>=t.length)break;r=Math.max(r+1,e-a)}return n}function u(c){const s=c.trim(),a=s.match(/```(?:json)?\s*([\s\S]*?)```/);let t=a?a[1].trim():s;const n=t.indexOf("["),r=t.lastIndexOf("]");if(n<0||r<=n)return[];t=t.slice(n,r+1);try{const e=JSON.parse(t);return Array.isArray(e)?e:[]}catch{return[]}}function h(c,s){const a=new Set;return c.filter(t=>{const n=s(t);return!n||a.has(n)?!1:(a.add(n),!0)})}export{u as p,l as s,h as u};
