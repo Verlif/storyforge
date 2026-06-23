@@ -32,5 +32,5 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}  # 使用 PAT
           repository-name: Verlif/storyforge  # 目标仓库
           branch: gh-pages  # 目标分支（可自定义）
-          folder: public  # Vue 打包后的目录
+          folder: dist  # Vue 打包后的目录
           clean: true  # 清理旧文件
